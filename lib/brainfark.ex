@@ -1,5 +1,5 @@
 defmodule Brainfark do
   def main(_args) do
-    Compiler.potato
+    IO.puts Compiler.run(",.,.,.,.", "what")
   end
 end

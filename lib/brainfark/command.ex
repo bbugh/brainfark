@@ -1,18 +1,7 @@
-require IEx
-
 defmodule Command do
   import Guards
-  # def command(">", state = %{data: data, dataptr: dataptr})
-  #   when dataptr == length(data) - 1 do
-  #
-  #   {:ok, %{state | data: data ++ [0], dataptr: dataptr + 1}}
-  # end
-  #
-  # def command(">", state = %{dataptr: dataptr})
-  #   when dataptr >= 0 do
-  #
-  #   {:ok, %{state | dataptr: dataptr + 1}}
-  # end
+
+  def command(_, state = %{data: []}), do: {:error, state}
 
   def command(">", state = %{data: data, dataptr: dataptr})
     when is_list(data) and is_integer(dataptr) and dataptr >= 0 do
@@ -45,14 +34,8 @@ defmodule Command do
     {:ok, %{state | dataptr: dataptr - 1}}
   end
 
-  def command(",", state = %{data: data, dataptr: dataptr, input: input}) do
-    [char | input] = input
-
-    data = if length(data) > 0 do
-      List.replace_at(data, dataptr, char)
-    else
-      [char]
-    end
+  def command(",", state = %{data: data, dataptr: dataptr, input: [char | input]}) do
+    data = List.replace_at(data, dataptr, char)
 
     {:ok, %{state | data: data, input: input}}
   end
@@ -68,14 +51,12 @@ defmodule Command do
     {:ok, %{state | data: data}}
   end
 
+  def command("-", %{data: data, dataptr: dataptr} = state)
+    when pointer_out_of_range?(data, dataptr), do: {:error, state}
+
   def command("-", state = %{data: data, dataptr: dataptr}) do
-    cond do
-      !pointer_in_range(state) ->
-        {:error, state}
-      true ->
-        data = List.update_at(data, dataptr, &wrap_decrement/1)
-        {:ok, %{state | data: data}}
-    end
+    data = List.update_at(data, dataptr, &wrap_decrement/1)
+    {:ok, %{state | data: data}}
   end
 
   def command(".", state = %{data: data, dataptr: dataptr, output: output}) do
@@ -84,18 +65,7 @@ defmodule Command do
 
   defp wrap_increment(value) when value >= 255, do: 0
   defp wrap_increment(value), do: value + 1
-  # defp wrap_increment(value) do
-  #   rem(value + 1, 256)
-  # end
 
   defp wrap_decrement(value) when value <= 0, do: 255
   defp wrap_decrement(value), do: value - 1
-
-  defp pointer_in_range(%{data: data, dataptr: dataptr}) do
-    dataptr >= 0 and dataptr < length(data)
-  end
-
-  defp success(state, update) do
-    {:ok, Map.merge(state, update)}
-  end
 end

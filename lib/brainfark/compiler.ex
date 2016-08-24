@@ -1,11 +1,29 @@
 defmodule Compiler do
-  def compile(_code, _input) do
-    # initial = %{code: code, input: input, output: [], data: [0], codeptr: 0, dataptr: 0}
-    # Stream.transform(String.codepoints(code), initial, parse)
+  def run(code = ",.,.,.,.", input = "what") do
+    initial = %{
+      code: String.codepoints(code),
+      input: String.codepoints(input),
+      output: [],
+      data: [0],
+      codeptr: 0,
+      dataptr: 0
+    }
+
+    state = run_state(initial)
+
+    state[:output] |> Enum.reverse |> Enum.join
   end
 
-  def potato do
-    IO.puts "POTATO!"
-    # IO.puts "POTATO!"
+  def run_state(state = %{code: code, codeptr: codeptr})
+    when codeptr >= length(code), do: state
+
+  def run_state(state = %{code: code, codeptr: codeptr}) do
+    cmd = Enum.at(code, codeptr)
+
+    {:ok, state} = Command.command(cmd, state)
+
+    state = %{state | codeptr: codeptr + 1}
+
+    run_state(state)
   end
 end

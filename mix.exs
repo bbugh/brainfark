@@ -8,7 +8,8 @@ defmodule Brainfark.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      escript: [main_module: Brainfark],
-     deps: deps()]
+     deps: deps(),
+     default_task: "test"]
   end
 
   # Configuration for the OTP application

@@ -2,6 +2,11 @@ defmodule CommandTest do
   use ExUnit.Case
   doctest Command
 
+  test "catches invalid data" do
+    {result, _} = Command.command("whatever", %{data: []})
+    assert result == :error
+  end
+
   describe "> increment data pointer" do
     test "parsing default setting behaves correclty" do
       result = Command.command(">", %{data: [0], dataptr: 0})
@@ -81,17 +86,12 @@ defmodule CommandTest do
 
   describe ", capture" do
     test "input should have the front char removed" do
-      {:ok, %{input: input}} = Command.command(",", %{data: [], dataptr: 0, input: 'hello'})
+      {:ok, %{input: input}} = Command.command(",", %{data: [0], dataptr: 0, input: 'hello'})
       assert input == 'ello'
     end
 
     test "it should replace the current data ptr location with the first input" do
       {:ok, %{data: data}} = Command.command(",", %{data: [97], dataptr: 0, input: 'hello'})
-      assert data == [104]
-    end
-
-    test "insert the first input into data when given an empty data list" do
-      {:ok, %{data: data}} = Command.command(",", %{data: [], dataptr: 0, input: 'hello'})
       assert data == [104]
     end
   end
@@ -138,22 +138,4 @@ defmodule CommandTest do
       assert output == [98, 97]
     end
   end
-
-  # describe ". output value" do
-  #   test "it outputs the character at the data pointer" do
-  #     assert capture_io(fn ->
-  #       {:ok, _} = Command.command(".", %{data: [97, 98], dataptr: 1})
-  #     end) == "b"
-  #
-  #     assert capture_io(fn ->
-  #       IO.puts "a"
-  #     end) == "a\n"
-  #
-  #     fun = fn ->
-  #       assert Enum.each(["some", "example"], &(IO.puts &1)) == :ok
-  #     end
-  #     assert capture_io(fun) == "some\nexample\n"
-  #     # tip: or use only: "capture_io(fun)" to silence the IO output (so only assert the return value)
-  #   end
-  # end
 end

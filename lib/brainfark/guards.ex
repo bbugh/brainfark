@@ -11,7 +11,7 @@ defmodule Guards do
     end
   end
 
-  # this doesn't work, not sure why yet. 
+  # this doesn't work, not sure why yet.
   defmacro pointer_out_of_range?(data, dataptr) do
     quote do
       unquote(dataptr) < 0 or unquote(dataptr) >= length(unquote(data))
