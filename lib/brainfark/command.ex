@@ -57,12 +57,13 @@ defmodule Command do
     {:ok, %{state | data: data, input: input}}
   end
 
-  def command("+", state), do: do_add_command(state)
+  def command("+", %{data: data, dataptr: dataptr} = state),
+    do: do_add_command(state, data, dataptr)
 
-  defp do_add_command(%{data: data, dataptr: dataptr} = state)
+  defp do_add_command(state, data, dataptr)
     when pointer_out_of_range?(data, dataptr), do: {:error, state}
 
-  defp do_add_command(%{data: data, dataptr: dataptr} = state) do
+  defp do_add_command(state, data, dataptr) do
     data = List.update_at(data, dataptr, &wrap_increment/1)
     {:ok, %{state | data: data}}
   end
