@@ -30,19 +30,18 @@ defmodule Command do
   end
 
   def command("<", state = %{data: data, dataptr: dataptr})
-    when is_list(data) and is_integer(dataptr) and dataptr >= 0 do
+    when is_list(data)
+    and is_integer(dataptr)
+    and dataptr >= 0, do: do_left_move(state)
 
-    dataptr = dataptr - 1
+  # BF assumes the data buffer is infinite, so if we are past the beginning,
+  # we have to add a char to the beginning of the data to pretend that
+  defp do_left_move(state = %{data: data, dataptr: 0}) do
+    {:ok, %{state | data: [0 | data] }}
+  end
 
-    # data list is assumed by BF to be infinite, so if we pass the beginning,
-    # we have to add a char to the beginning of the data to pretend
-    {dataptr, data} = if dataptr < 0 do
-      {0, [0 | data]}
-    else
-      {dataptr, data}
-    end
-
-    {:ok, %{state | dataptr: dataptr, data: data}}
+  defp do_left_move(state = %{dataptr: dataptr}) do
+    {:ok, %{state | dataptr: dataptr - 1}}
   end
 
   def command(",", state = %{data: data, dataptr: dataptr, input: input}) do
@@ -75,6 +74,10 @@ defmodule Command do
         data = List.update_at(data, dataptr, &wrap_decrement/1)
         {:ok, %{state | data: data}}
     end
+  end
+
+  def command(".", state = %{data: data, dataptr: dataptr, output: output}) do
+    {:ok, %{state | output: [Enum.at(data, dataptr) | output]}}
   end
 
   defp wrap_increment(value) when value >= 255, do: 0

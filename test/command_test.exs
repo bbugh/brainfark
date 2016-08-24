@@ -4,8 +4,8 @@ defmodule CommandTest do
 
   describe "> increment data pointer" do
     test "parsing default setting behaves correclty" do
-      result = Command.command(">", %{data: [], dataptr: 0})
-      assert result == {:ok, %{data: [0], dataptr: 1}}
+      result = Command.command(">", %{data: [0], dataptr: 0})
+      assert result == {:ok, %{data: [0, 0], dataptr: 1}}
     end
 
     test "it appends a 0 to data when pointing past the end" do
@@ -45,6 +45,11 @@ defmodule CommandTest do
   # end
   #
   describe "< decrement data pointer" do
+    test "parsing default setting behaves correclty" do
+      result = Command.command("<", %{data: [0], dataptr: 0})
+      assert result == {:ok, %{data: [0, 0], dataptr: 0}}
+    end
+
     test "it moves the data pointer down" do
       {:ok, %{dataptr: dataptr}} = Command.command("<", %{data: [1,2,3], dataptr: 1})
       assert dataptr == 0
@@ -127,7 +132,28 @@ defmodule CommandTest do
     end
   end
 
-  test "the truth" do
-    assert 1 + 1 == 2
+  describe ". output value" do
+    test "it adds the current data character to the output (in reverse)" do
+      {:ok, %{output: output}} = Command.command(".", %{data: [97, 98], dataptr: 1, output: [97]})
+      assert output == [98, 97]
+    end
   end
+
+  # describe ". output value" do
+  #   test "it outputs the character at the data pointer" do
+  #     assert capture_io(fn ->
+  #       {:ok, _} = Command.command(".", %{data: [97, 98], dataptr: 1})
+  #     end) == "b"
+  #
+  #     assert capture_io(fn ->
+  #       IO.puts "a"
+  #     end) == "a\n"
+  #
+  #     fun = fn ->
+  #       assert Enum.each(["some", "example"], &(IO.puts &1)) == :ok
+  #     end
+  #     assert capture_io(fun) == "some\nexample\n"
+  #     # tip: or use only: "capture_io(fun)" to silence the IO output (so only assert the return value)
+  #   end
+  # end
 end
