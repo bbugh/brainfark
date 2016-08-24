@@ -1,6 +1,6 @@
 defmodule Compiler do
-  def compile(code, input) do
-    # initial = %{code: code, input: input, output: [], data: [], codeptr: 0, dataptr: 0}
+  def compile(_code, _input) do
+    # initial = %{code: code, input: input, output: [], data: [0], codeptr: 0, dataptr: 0}
     # Stream.transform(String.codepoints(code), initial, parse)
   end
 
