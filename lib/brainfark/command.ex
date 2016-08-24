@@ -1,6 +1,7 @@
 require IEx
 
 defmodule Command do
+  import Guards
   # def command(">", state = %{data: data, dataptr: dataptr})
   #   when dataptr == length(data) - 1 do
   #
@@ -37,7 +38,7 @@ defmodule Command do
   # BF assumes the data buffer is infinite, so if we are past the beginning,
   # we have to add a char to the beginning of the data to pretend that
   defp do_left_move(state = %{data: data, dataptr: 0}) do
-    {:ok, %{state | data: [0 | data] }}
+    {:ok, %{state | data: [0 | data]}}
   end
 
   defp do_left_move(state = %{dataptr: dataptr}) do
@@ -56,14 +57,14 @@ defmodule Command do
     {:ok, %{state | data: data, input: input}}
   end
 
-  def command("+", state = %{data: data, dataptr: dataptr}) do
-    cond do
-      !pointer_in_range(state) ->
-        {:error, state}
-      true ->
-        data = List.update_at(data, dataptr, &wrap_increment/1)
-        {:ok, %{state | data: data}}
-    end
+  def command("+", state), do: do_add_command(state)
+
+  defp do_add_command(%{data: data, dataptr: dataptr} = state)
+    when pointer_out_of_range?(data, dataptr), do: {:error, state}
+
+  defp do_add_command(%{data: data, dataptr: dataptr} = state) do
+    data = List.update_at(data, dataptr, &wrap_increment/1)
+    {:ok, %{state | data: data}}
   end
 
   def command("-", state = %{data: data, dataptr: dataptr}) do
