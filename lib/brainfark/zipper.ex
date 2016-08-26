@@ -2,6 +2,7 @@ defmodule Zipper do
   @moduledoc """
     A Haskell clone Zipper list implementation.
   """
+  @type t :: %Zipper{left: list, right: list}
   defstruct left: [], right: []
 
   @doc """
@@ -12,6 +13,7 @@ defmodule Zipper do
       iex> Zipper.empty
       %Zipper{left: [], right: []}
   """
+  @spec empty :: Zipper.t
   def empty, do: %Zipper{}
 
   @doc """
@@ -22,6 +24,7 @@ defmodule Zipper do
       iex> Zipper.fromList([1, 2, 3])
       %Zipper{left: [], right: [1, 2, 3]}
   """
+  @spec fromList(list) :: Zipper.t
   def fromList(xs), do: %Zipper{right: xs}
 
 
@@ -196,11 +199,46 @@ defmodule Zipper do
 
       iex> Zipper.pop(%Zipper{left: [1], right: [2, 3]})
       %Zipper{left: [], right: [2, 3]}
+
       iex> Zipper.pop(Zipper.empty)
       %Zipper{left: [], right: []}
   """
   def pop(%Zipper{left: []} = z), do: z
   def pop(%Zipper{left: [_ | left]} = z) do
     %{z | left: left}
+  end
+
+  @doc """
+  Changes the current element in the zipper to the passed in `value`. If there
+  is no current element, the zipper is unchanged. If you want to add the
+  element, use `insert/2` instead.
+
+  ## Examples
+
+      iex> Zipper.replace(5, %Zipper{left: [1], right: [2, 3]})
+      %Zipper{left: [1], right: [5, 3]}
+
+      iex> Zipper.replace(5, Zipper.empty)
+      %Zipper{left: [], right: []}
+  """
+  def replace(_, %Zipper{right: []} = z), do: z
+  def replace(value, %Zipper{right: [_ | right]} = z) do
+    %{z | right: [value | right]}
+  end
+
+  @doc """
+  Returns the zipper with the elements in the reverse order. O(1).
+
+  The cursor is moved to the previous element, so if the cursor was at the
+  start, it's now off the right end, and if it was off the right end, it's now
+  at the start of the reversed list.
+
+  ## Examples
+
+      iex> Zipper.reverse(%Zipper{left: [2, 1], right: [3, 4]})
+      %Zipper{left: [3, 4], right: [2, 1]}
+  """
+  def reverse(%Zipper{left: left, right: right}) do
+    %Zipper{left: right, right: left}
   end
 end
