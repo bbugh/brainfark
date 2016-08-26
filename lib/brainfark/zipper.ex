@@ -16,16 +16,28 @@ defmodule Zipper do
   @spec empty :: Zipper.t
   def empty, do: %Zipper{}
 
+
+  @doc """
+  Returns a new Zipper with the cursor on `right`'s first element.
+
+  ## Examples
+
+      iex> Zipper.from_lists([1, 2, 3], [4, 5])
+      %Zipper{left: [3, 2, 1], right: [4, 5]}
+  """
+  @spec from_lists(list, list) :: Zipper.t
+  def from_lists(left, right), do: %Zipper{left: Enum.reverse(left), right: right}
+
   @doc """
   Returns a zipper containing the elements of `xs`, focused on the first element.
 
   ## Examples
 
-      iex> Zipper.fromList([1, 2, 3])
+      iex> Zipper.from_list([1, 2, 3])
       %Zipper{left: [], right: [1, 2, 3]}
   """
-  @spec fromList(list) :: Zipper.t
-  def fromList(xs), do: %Zipper{right: xs}
+  @spec from_list(list) :: Zipper.t
+  def from_list(xs), do: %Zipper{right: xs}
 
 
   @doc """
@@ -34,22 +46,22 @@ defmodule Zipper do
 
   ## Examples
 
-      iex> zip = Zipper.fromListEnd([1, 2, 3])
+      iex> zip = Zipper.from_list_end([1, 2, 3])
       %Zipper{left: [3, 2, 1], right: []}
       iex> Zipper.end? zip
       true
   """
-  def fromListEnd(xs), do: %Zipper{left: Enum.reverse(xs)}
+  def from_list_end(xs), do: %Zipper{left: Enum.reverse(xs)}
 
   @doc """
   Returns a list from the zipper, ignoring cursor position.
 
   ## Examples
 
-      iex> Zipper.toList(%Zipper{left: [3,2,1], right: [4,5,6]})
+      iex> Zipper.to_list(%Zipper{left: [3,2,1], right: [4,5,6]})
       [1, 2, 3, 4, 5, 6]
   """
-  def toList(%Zipper{} = z) do
+  def to_list(%Zipper{} = z) do
     Enum.reverse(z.left) ++ z.right
   end
 
@@ -95,6 +107,31 @@ defmodule Zipper do
   """
   def empty?(%Zipper{left: [], right: []}), do: true
   def empty?(%Zipper{}), do: false
+
+  @doc """
+  Returns the zipper with the cursor set to the start.
+
+  ## Examples
+
+      iex> Zipper.cursor_start(%Zipper{left: [2, 1], right: [3, 4]})
+      %Zipper{left: [], right: [1, 2, 3, 4]}
+  """
+  def cursor_start(z = %Zipper{left: [], right: []}), do: z
+  def cursor_start(z = %Zipper{left: []}), do: z
+  def cursor_start(z = %Zipper{}), do: %Zipper{right: Enum.reverse(z.left) ++ z.right}
+
+
+  @doc """
+  Returns the zipper with the cursor set just after the end.
+
+  ## Examples
+
+      iex> Zipper.cursor_end(%Zipper{left: [2, 1], right: [3, 4]})
+      %Zipper{left: [1, 2, 3, 4], right: []}
+  """
+  def cursor_end(z = %Zipper{right: []}), do: z
+  def cursor_end(z = %Zipper{left: [], right: []}), do: z
+  def cursor_end(z = %Zipper{}), do: %Zipper{left: Enum.reverse(z.left) ++ z.right}
 
   @doc """
   Returns the value at the cursor position, or nil if it is at the end or empty.
@@ -153,8 +190,8 @@ defmodule Zipper do
       iex> Zipper.insert(5, Zipper.empty)
       %Zipper{left: [], right: [5]}
   """
-  def insert(value, %Zipper{right: right} = zip) do
-    %{zip | right: [value | right]}
+  def insert(value, z = %Zipper{right: right}) do
+    %{z | right: [value | right]}
   end
 
   @doc """
@@ -168,9 +205,9 @@ defmodule Zipper do
       iex> Zipper.delete(%Zipper{left: [3], right: []})
       %Zipper{left: [3], right: []}
   """
-  def delete(%Zipper{right: []} = z), do: z
-  def delete(%Zipper{right: [_ | right]} = zip) do
-    %{zip | right: right}
+  def delete(z = %Zipper{right: []}), do: z
+  def delete(z = %Zipper{right: [_ | right]}) do
+    %{z | right: right}
   end
 
   @doc """
@@ -185,7 +222,7 @@ defmodule Zipper do
       iex> Zipper.push(5, Zipper.empty)
       %Zipper{left: [5], right: []}
   """
-  def push(value, %Zipper{left: left} = z) do
+  def push(value, z = %Zipper{left: left}) do
     %{z | left: [value | left]}
   end
 
@@ -203,15 +240,15 @@ defmodule Zipper do
       iex> Zipper.pop(Zipper.empty)
       %Zipper{left: [], right: []}
   """
-  def pop(%Zipper{left: []} = z), do: z
-  def pop(%Zipper{left: [_ | left]} = z) do
+  def pop(z = %Zipper{left: []}), do: z
+  def pop(z = %Zipper{left: [_ | left]}) do
     %{z | left: left}
   end
 
   @doc """
   Changes the current element in the zipper to the passed in `value`. If there
   is no current element, the zipper is unchanged. If you want to add the
-  element, use `insert/2` instead.
+  element, use `insert/2` or `update/2` instead.
 
   ## Examples
 
@@ -221,8 +258,26 @@ defmodule Zipper do
       iex> Zipper.replace(5, Zipper.empty)
       %Zipper{left: [], right: []}
   """
-  def replace(_, %Zipper{right: []} = z), do: z
-  def replace(value, %Zipper{right: [_ | right]} = z) do
+  def replace(_, z = %Zipper{right: []}), do: z
+  def replace(value, z = %Zipper{right: [_ | right]}) do
+    %{z | right: [value | right]}
+  end
+
+  @doc """
+  Replaces the current element in the zipper, or if it's empty, inserts it.
+
+  ## Examples
+
+      iex> Zipper.update(5, %Zipper{left: [1], right: [2]})
+      %Zipper{left: [1], right: [5]}
+
+      iex> Zipper.update(5, Zipper.empty)
+      %Zipper{left: [], right: [5]}
+  """
+  def update(value, z = %Zipper{right: []}) do
+    %{z | right: [value]}
+  end
+  def update(value, z = %Zipper{right: [_ | right]}) do
     %{z | right: [value | right]}
   end
 
@@ -277,4 +332,18 @@ defmodule Zipper do
   def foldr(%Zipper{} = z, acc, function) do
     List.foldr(z.left, acc, function)
   end
+
+  @doc """
+  Returns the count of the number of elements in the zipper.
+
+  ## Examples
+
+      iex> Zipper.count(%Zipper{left: [2, 1], right: [3, 4]})
+      4
+
+      iex> Zipper.count(Zipper.empty)
+      0
+  """
+  def count(%Zipper{left: [], right: []}), do: 0
+  def count(%Zipper{left: left, right: right}), do: length(left) + length(right)
 end
