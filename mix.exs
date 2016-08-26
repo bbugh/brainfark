@@ -5,6 +5,9 @@ defmodule Brainfark.Mixfile do
     [app: :brainfark,
      version: "0.1.0",
      elixir: "~> 1.3",
+     name: "Brainfark",
+     source_url: "https://github.com/bbugh/brainfark",
+     homepage_url: "https://github.com/bbugh/brainfark",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      escript: [main_module: Brainfark],
@@ -30,7 +33,8 @@ defmodule Brainfark.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:credo, "~> 0.4", only: [:dev, :test]}
+      {:credo, "~> 0.4", only: [:dev, :test]},
+      {:ex_doc, "~> 0.12", only: :dev}
     ]
   end
 end
