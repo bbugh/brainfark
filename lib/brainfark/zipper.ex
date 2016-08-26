@@ -241,4 +241,40 @@ defmodule Zipper do
   def reverse(%Zipper{left: left, right: right}) do
     %Zipper{left: right, right: left}
   end
+
+  @doc """
+  Folds from the left, including the cursor position.
+
+  ## Examples
+
+      iex> z = %Zipper{left: [2, 1], right: [3, 4]}
+      iex> Zipper.foldl(z, 0, fn(i, acc) -> i + acc end)
+      7
+
+      iex> z = %Zipper{left: [4, 3, 2, 1], right: []}
+      iex> Zipper.foldl(z, 0, fn(i, acc) -> i + acc end)
+      0
+  """
+  def foldl(%Zipper{right: []}, acc, _), do: acc
+  def foldl(%Zipper{} = z, acc, function) do
+    List.foldl(z.right, acc, function)
+  end
+
+  @doc """
+  Folds from the right, not including the cursor position.
+
+  ## Examples
+
+      iex> z = %Zipper{left: [2, 1], right: [3, 4]}
+      iex> Zipper.foldr(z, 0, fn(i, acc) -> i + acc end)
+      3
+
+      iex> z = %Zipper{left: [], right: [1, 2, 3, 4]}
+      iex> Zipper.foldr(z, 0, fn(i, acc) -> i + acc end)
+      0
+  """
+  def foldr(%Zipper{left: []}, acc, _), do: acc
+  def foldr(%Zipper{} = z, acc, function) do
+    List.foldr(z.left, acc, function)
+  end
 end
