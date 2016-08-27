@@ -17,7 +17,7 @@ defmodule CmdState do
       %CmdState{code: %ZipperList{left: [], right: [",", ".", ",", "."]},
         data: %ZipperList{left: [], right: []}, input: ["h", "i"], output: []}
   """
-  @spec new(String.t, String.t) :: ZipperList.t
+  @spec new(String.t, String.t) :: CmdState.t
   def new(code, input) do
     %CmdState{
       code: code |> String.codepoints |> ZipperList.from_list,

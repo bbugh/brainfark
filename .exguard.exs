@@ -6,7 +6,7 @@ guard("unit-test", run_on_start: true)
 |> notification(:auto)
 
 guard("analysis")
-|> command("mix dialyzer -q || tput bel")
+|> command("mix dialyzer || tput bel")
 |> watch(~r{\.(erl|ex|exs|eex|xrl|yrl)\z}i)
 |> notification(:auto)
 
