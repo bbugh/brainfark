@@ -12,7 +12,10 @@ defmodule Brainfark.Mixfile do
      start_permanent: Mix.env == :prod,
      escript: [main_module: Brainfark],
      deps: deps(),
-     default_task: "test"]
+     default_task: "test",
+     dialyzer: [plt_add_apps: [:zipper_list]],
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test]]
   end
 
   # Configuration for the OTP application
@@ -33,9 +36,11 @@ defmodule Brainfark.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:credo, "~> 0.4", only: [:dev, :test]},
+      {:ex_guard, "~> 1.1.1", only: :dev},
+      {:excoveralls, "~> 0.5", only: :test},
+      {:credo, "~> 0.4", only: :dev},
       {:ex_doc, "~> 0.12", only: :dev},
-      {:zipper_list, path: "/Users/bbugh/projects/elixir/zipper_list"}
+      {:zipper_list, github: "bbugh/zipper_list"}
     ]
   end
 end
