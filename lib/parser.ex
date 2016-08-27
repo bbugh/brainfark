@@ -3,14 +3,14 @@ defmodule Parser do
   Parser for the Brainfark language.
 
   The primary function is `Parser.parse/1`, which takes a list of tokens and
-  validates that it is a plausible program. This will only catch compiler
+  validates that it is a plausible program. This will only catch syntax
   errors, not runtime errors.
 
   """
 
   @doc """
   Parses a list of Brainfark tokens to check for syntax errors. Raises
-  CompileError for any issues.
+  SyntaxError for any issues.
 
   ## Examples
 
@@ -19,25 +19,27 @@ defmodule Parser do
   """
   @spec parse(list(atom())) :: list()
   def parse([]) do
-    raise CompileError, description: "Can't run an empty program."
+    raise SyntaxError, description: "Invalid syntax: empty program"
   end
 
   def parse(tokens) do
     remaining = tokens |> Enum.reduce(0, &count_loops/2)
 
     if remaining > 0 do
-      raise CompileError, description: "Loop beginning with unmatched ending."
+      raise SyntaxError, description: "Invalid syntax: Loop beginning with unmatched ending"
     else
       tokens
     end
   end
 
+  # Increments or decrements the loop count based on the tokens, with awareness
+  # of mismatched and out of order loop tokens.
   @spec count_loops(atom(), integer()) :: integer()
   defp count_loops(token, count) do
     case token do
       :loop_begin -> count + 1
       :loop_end when count > 0 -> count - 1
-      :loop_end -> raise CompileError, description: "Loop ending with unmatched beginning."
+      :loop_end -> raise SyntaxError, description: "Invalid syntax: Loop ending with unmatched beginning"
       _ -> count
     end
   end
