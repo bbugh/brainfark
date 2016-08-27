@@ -34,7 +34,8 @@ defmodule Brainfark.Mixfile do
   defp deps do
     [
       {:credo, "~> 0.4", only: [:dev, :test]},
-      {:ex_doc, "~> 0.12", only: :dev}
+      {:ex_doc, "~> 0.12", only: :dev},
+      {:zipper_list, path: "/Users/bbugh/projects/elixir/zipper_list"}
     ]
   end
 end

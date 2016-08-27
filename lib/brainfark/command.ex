@@ -1,3 +1,5 @@
+require IEx
+
 defmodule Command do
   import Guards
 
@@ -61,6 +63,24 @@ defmodule Command do
 
   def command(".", state = %{data: data, dataptr: dataptr, output: output}) do
     {:ok, %{state | output: [Enum.at(data, dataptr) | output]}}
+  end
+
+  def command("[", state = %{data: data, dataptr: dataptr}) do
+    if Enum.at(data, dataptr) == 0 do
+      #ZipperTree.right
+      {:skip, state}
+    else
+      #ZipperTree.up |> ZipperTree.right
+      {:ok, state}
+    end
+  end
+
+  def command("]", state = %{data: data, dataptr: dataptr}) do
+    if Enum.at(data, dataptr) == 0 do
+      {:loop, state}
+    else
+      {:ok, state}
+    end
   end
 
   defp wrap_increment(value) when value >= 255, do: 0
