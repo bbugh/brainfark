@@ -1,9 +1,10 @@
 defmodule Zipper do
   @moduledoc """
-    A Haskell clone Zipper list implementation.
+    A Haskell-inspired Zipper list implementation.
   """
   @type t :: %Zipper{left: list, right: list, cursor: any}
   defstruct left: [], right: [], cursor: nil
+
 
   @doc """
   Returns an empty Zipper with the cursor position at the front.
@@ -29,6 +30,7 @@ defmodule Zipper do
   def from_lists(left, [c | right]) do
     %Zipper{left: Enum.reverse(left), right: right, cursor: c}
   end
+
 
   @doc """
   Returns a zipper containing the elements of `xs`, with the cursor from the
@@ -57,6 +59,7 @@ defmodule Zipper do
   @spec from_list_end(list) :: Zipper.t
   def from_list_end(xs), do: %Zipper{left: Enum.reverse(xs)}
 
+
   @doc """
   Returns a list from the zipper, including cursor value.
 
@@ -65,9 +68,11 @@ defmodule Zipper do
       iex> Zipper.to_list(%Zipper{left: [3,2,1], right: [5,6], cursor: 4})
       [1, 2, 3, 4, 5, 6]
   """
+  @spec to_list(Zipper.t) :: list
   def to_list(z = %Zipper{}) do
     Enum.reverse(z.left) ++ [z.cursor | z.right]
   end
+
 
   @doc """
   Returns `true` if the zipper is at the start.
@@ -80,8 +85,10 @@ defmodule Zipper do
       iex> Zipper.beginning?(%Zipper{left: [2, 1], right: [3]})
       false
   """
+  @spec beginning?(Zipper.t) :: boolean
   def beginning?(%Zipper{left: []}), do: true
   def beginning?(%Zipper{}), do: false
+
 
   @doc """
   Returns `true` if the zipper is at the end.
@@ -96,8 +103,10 @@ defmodule Zipper do
       iex> Zipper.end?(%Zipper{left: [2, 1], right: [3]})
       false
   """
+  @spec end?(Zipper.t) :: boolean
   def end?(%Zipper{cursor: nil, right: []}), do: true
   def end?(%Zipper{}), do: false
+
 
   @doc """
   Returns `true` if the zipper is empty.
@@ -110,8 +119,10 @@ defmodule Zipper do
       iex> Zipper.empty?(%Zipper{left: [3, 2, 1], cursor: 4})
       false
   """
+  @spec empty?(Zipper.t) :: boolean
   def empty?(%Zipper{left: [], right: [], cursor: nil}), do: true
   def empty?(%Zipper{}), do: false
+
 
   @doc """
   Returns the zipper with the cursor set to the start.
@@ -121,6 +132,7 @@ defmodule Zipper do
       iex> Zipper.cursor_start(%Zipper{left: [2, 1], right: [4], cursor: 3})
       %Zipper{left: [], right: [2, 3, 4], cursor: 1}
   """
+  @spec cursor_start(Zipper.t) :: Zipper.t
   def cursor_start(z = %Zipper{left: [], right: []}), do: z
   def cursor_start(z = %Zipper{}) do
     [cursor | right] = Enum.reverse(z.left) ++ [z.cursor | z.right]
@@ -136,30 +148,19 @@ defmodule Zipper do
       iex> Zipper.cursor_end(%Zipper{left: [2, 1], right: [4, 5], cursor: 3})
       %Zipper{left: [5, 4, 3, 2, 1], right: [], cursor: nil}
   """
+  @spec cursor_end(Zipper.t) :: Zipper.t
   def cursor_end(z = %Zipper{right: []}), do: z
   def cursor_end(z = %Zipper{left: [], right: []}), do: z
   def cursor_end(z = %Zipper{}) do
     %Zipper{cursor: nil, left: Enum.reverse(z.right) ++ [z.cursor | z.left]}
    end
 
-  # @doc """
-  # Returns the value at the cursor position, or nil if it is at the end or empty.
-  #
-  # ## Examples
-  #
-  #     iex> Zipper.cursor(%Zipper{left: [2, 1], right: [3]})
-  #     3
-  #     iex> Zipper.cursor(%Zipper{left: [3, 2, 1], right: []})
-  #     nil
-  #     iex> Zipper.cursor(Zipper.empty)
-  #     nil
-  # """
-  # def cursor(%Zipper{right: []}), do: nil
-  # def cursor(%Zipper{right: [h | _]}), do: h
 
   @doc """
   Returns the zipper with the cursor focus shifted one element to the left, or
   the zipper if the cursor is already at the beginning.
+
+  Use `begin?` to check if the zipper is at the beginning.
 
   ## Examples
 
@@ -169,26 +170,37 @@ defmodule Zipper do
       iex> Zipper.left(%Zipper{left: [], right: [2, 3], cursor: 1})
       %Zipper{left: [], right: [2, 3], cursor: 1}
   """
+  @spec left(Zipper.t) :: Zipper.t
   def left(z = %Zipper{left: []}), do: z
   def left(z = %Zipper{left: [head | tail]}) do
     %Zipper{cursor: head, left: tail, right: [z.cursor | z.right]}
   end
 
+
   @doc """
   Returns the zipper with the cursor focus shifted one element to the right, or
   returns the zipper if the cursor is past the end.
 
+  Use `end?` to check if the zipper is at the end.
+
   ## Examples
 
-      iex> Zipper.right(%Zipper{left: [2, 1], right: [4], cursor: 3})
-      %Zipper{left: [3, 2, 1], right: [], cursor: 4}
+  The cursor moves out of the `right` list:
+
+      iex> Zipper.right(%Zipper{left: [2, 1], right: [4, 5], cursor: 3})
+      %Zipper{left: [3, 2, 1], right: [5], cursor: 4}
+
+  If it is on the last item, `cursor` will be `nil`.
 
       iex> Zipper.right(%Zipper{left: [3, 2, 1], right: [], cursor: 4})
       %Zipper{left: [4, 3, 2, 1], right: [], cursor: nil}
 
+  If the cursor is at the end, `right` returns the zipper:
+
       iex> Zipper.right(%Zipper{left: [4, 3, 2, 1], right: [], cursor: nil})
       %Zipper{left: [4, 3, 2, 1], right: [], cursor: nil}
   """
+  @spec right(Zipper.t) :: Zipper.t
   def right(z = %Zipper{cursor: nil, right: []}), do: z
   def right(z = %Zipper{cursor: cursor, right: []}) do
     %{z | cursor: nil, left: [cursor | z.left]}
@@ -197,6 +209,7 @@ defmodule Zipper do
     %Zipper{cursor: head, left: [z.cursor | z.left], right: tail}
   end
 
+
   @doc """
   Inserts `value` at the cursor position, moving the current cursor to the right.
 
@@ -204,27 +217,29 @@ defmodule Zipper do
 
   Inserting a value replaces the cursor:
 
-      iex> Zipper.insert(5, %Zipper{left: [1], right: [3], cursor: 2})
+      iex> Zipper.insert(%Zipper{left: [1], right: [3], cursor: 2}, 5)
       %Zipper{left: [1], right: [2, 3], cursor: 5}
 
   On empty zippers, it inserts at the cursor position:
 
-      iex> Zipper.insert(5, Zipper.empty)
+      iex> Zipper.insert(Zipper.empty, 5)
       %Zipper{left: [], right: [], cursor: 5}
 
   Any values are pushed to the right on any zipper:
 
-      iex> Zipper.insert(10, %Zipper{left: [], right: [], cursor: 5})
+      iex> Zipper.insert(%Zipper{left: [], right: [], cursor: 5}, 10)
       %Zipper{left: [], right: [5], cursor: 10}
   """
-  def insert(value, z = %Zipper{cursor: nil}), do: %{z | cursor: value}
-  def insert(value, z = %Zipper{right: right}) do
+  @spec insert(Zipper.t, any) :: Zipper.t
+  def insert(z = %Zipper{cursor: nil}, value), do: %{z | cursor: value}
+  def insert(z = %Zipper{right: right}, value) do
     %{z | cursor: value, right: [z.cursor | right]}
   end
 
+
   @doc """
-  Deletes the value at the cursor position and replaces it with the next value
-  from the right.
+  Deletes the value at the cursor position and replaces the cursor with the next
+  value from the right.
 
   ## Examples
 
@@ -239,13 +254,15 @@ defmodule Zipper do
       iex> Zipper.delete(%Zipper{left: [2, 5, 3], right: [], cursor: 8})
       %Zipper{left: [2, 5, 3], right: [], cursor: nil}
   """
+  @spec delete(Zipper.t) :: Zipper.t
   def delete(z = %Zipper{cursor: nil}), do: z
-  def delete(z = %Zipper{cursor: c, right: []}) do
+  def delete(z = %Zipper{cursor: _c, right: []}) do
     %{z | cursor: nil}
   end
   def delete(z = %Zipper{right: [cursor | right]}) do
     %{z | cursor: cursor, right: right}
   end
+
 
   @doc """
   Pushes a value into the position before the cursor.
@@ -254,14 +271,16 @@ defmodule Zipper do
 
   ## Examples
 
-      iex> Zipper.push(5, %Zipper{left: [1], right: [3, 4], cursor: 2})
+      iex> Zipper.push(%Zipper{left: [1], right: [3, 4], cursor: 2}, 5)
       %Zipper{left: [5, 1], right: [3, 4], cursor: 2}
-      iex> Zipper.push(5, Zipper.empty)
+      iex> Zipper.push(Zipper.empty, 5)
       %Zipper{left: [5], right: [], cursor: nil}
   """
-  def push(value, z = %Zipper{left: left}) do
+  @spec push(Zipper.t, any) :: Zipper.t
+  def push(z = %Zipper{left: left}, value) do
     %{z | left: [value | left]}
   end
+
 
   @doc """
   Pops a value off of the position before the cursor. If used on an empty
@@ -277,10 +296,12 @@ defmodule Zipper do
       iex> Zipper.pop(Zipper.empty)
       %Zipper{left: [], right: [], cursor: nil}
   """
+  @spec pop(Zipper.t) :: Zipper.t
   def pop(z = %Zipper{left: []}), do: z
   def pop(z = %Zipper{left: [_ | left]}) do
     %{z | left: left}
   end
+
 
   @doc """
   Replaces the zipper's cursor with the passed in `value`. If there is no
@@ -288,15 +309,17 @@ defmodule Zipper do
 
   ## Examples
 
-      iex> Zipper.replace(5, %Zipper{left: [1], right: [3, 4], cursor: 2})
+      iex> Zipper.replace(%Zipper{left: [1], right: [3, 4], cursor: 2}, 5)
       %Zipper{left: [1], right: [3, 4], cursor: 5}
 
-      iex> Zipper.replace(5, Zipper.empty)
+      iex> Zipper.replace(Zipper.empty, 5)
       %Zipper{left: [], right: [], cursor: 5}
   """
-  def replace(value, z = %Zipper{}) do
+  @spec replace(Zipper.t, any) :: Zipper.t
+  def replace(z = %Zipper{}, value) do
     %{z | cursor: value}
   end
+
 
   @doc """
   Returns the zipper with the elements in the reverse order. O(1).
@@ -313,45 +336,11 @@ defmodule Zipper do
       iex> Zipper.reverse(%Zipper{left: [], right: [2, 3, 4], cursor: 1})
       %Zipper{left: [2, 3, 4], right: [], cursor: 1}
   """
+  @spec reverse(Zipper.t) :: Zipper.t
   def reverse(z = %Zipper{left: left, right: right}) do
     %{z | left: right, right: left}
   end
 
-  # @doc """
-  # Folds from the left, including the cursor position.
-  #
-  # ## Examples
-  #
-  #     iex> z = %Zipper{left: [2, 1], right: [3, 4]}
-  #     iex> Zipper.foldl(z, 0, fn(i, acc) -> i + acc end)
-  #     7
-  #
-  #     iex> z = %Zipper{left: [4, 3, 2, 1], right: []}
-  #     iex> Zipper.foldl(z, 0, fn(i, acc) -> i + acc end)
-  #     0
-  # """
-  # def foldl(%Zipper{cursor: nil, right: []}, acc, _), do: acc
-  # def foldl(z = %Zipper{}, acc, function) do
-  #   List.foldl(z.right, acc, function)
-  # end
-  #
-  # @doc """
-  # Folds from the right, not including the cursor position.
-  #
-  # ## Examples
-  #
-  #     iex> z = %Zipper{left: [2, 1], right: [3, 4]}
-  #     iex> Zipper.foldr(z, 0, fn(i, acc) -> i + acc end)
-  #     3
-  #
-  #     iex> z = %Zipper{left: [], right: [1, 2, 3, 4]}
-  #     iex> Zipper.foldr(z, 0, fn(i, acc) -> i + acc end)
-  #     0
-  # """
-  # def foldr(%Zipper{left: []}, acc, _), do: acc
-  # def foldr(z = %Zipper{}, acc, function) do
-  #   List.foldr(z.left, acc, function)
-  # end
 
   @doc """
   Returns the count of the number of elements in the zipper.
@@ -364,6 +353,7 @@ defmodule Zipper do
       iex> Zipper.count(Zipper.empty)
       0
   """
+  @spec count(Zipper.t) :: integer
   def count(%Zipper{left: [], right: [], cursor: nil}), do: 0
   def count(%Zipper{left: left, right: right, cursor: cursor}) when not is_nil(cursor) do
     length(left) + length(right) + 1

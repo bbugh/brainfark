@@ -40,7 +40,7 @@ defimpl Enumerable, for: Zipper do
       ...>end)
       15
   """
-  def reduce(z = %Zipper{cursor: nil, right: []}, {:cont, acc}, fun) do
+  def reduce(%Zipper{cursor: nil, right: []}, {:cont, acc}, _fun) do
     {:done, acc}
   end
 
