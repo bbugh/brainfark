@@ -2,9 +2,12 @@ defmodule CmdState do
   @moduledoc """
   The structure for keeping state of the interpreter.
   """
-  @type t :: %CmdState{code: ZipperList.t, data: ZipperList.t, input: list, output: list}
+  @type t :: %CmdState{code: ZipperList.t, data: ZipperList.t, stack: [],
+    input: list, output: list}
+
   defstruct code: %ZipperList{},
             data: %ZipperList{},
+            stack: [],
             input: [],
             output: []
 
