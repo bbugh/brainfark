@@ -44,7 +44,7 @@ defmodule Brainfark.Mixfile do
       {:excoveralls, "~> 0.5", only: :test},
       {:credo, "~> 0.4", only: :dev},
       {:ex_doc, "~> 0.12", only: :dev},
-      {:zipper_list, github: "bbugh/zipper_list"}
+      {:zipper_list, "~> 1.0.0"}
     ]
   end
 end
