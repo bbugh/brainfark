@@ -1,5 +1,9 @@
 defmodule Interpreter do
   @moduledoc """
+  Interprets a Brainfark program.
+
+  To turn the output into text, pass the final state to
+  `CmdState.render_output/1` and it will convert it into a string.
 
   ## Examples
       iex> ",[.,]"
@@ -14,11 +18,6 @@ defmodule Interpreter do
 
   @doc """
   Interpret a parsed Brainfark program.
-
-  See above for examples.
-
-  To turn the output into text, pass the final state to
-  `CmdState.render_output/1` and it will convert it into a string.
   """
   def interpret(program, input) do
     do_interpret(%CmdState{
