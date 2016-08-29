@@ -11,9 +11,9 @@ defmodule Brainfark.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      escript: [main_module: Brainfark],
+     docs: [extras: docs()],
      deps: deps(),
      default_task: "test",
-     dialyzer: [plt_add_apps: [:zipper_list]],
      test_coverage: [tool: ExCoveralls],
      preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test]]
   end
@@ -23,6 +23,10 @@ defmodule Brainfark.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger]]
+  end
+
+  defp docs do
+    ["README.md": [title: "Readme"]]
   end
 
   # Dependencies can be Hex packages:
