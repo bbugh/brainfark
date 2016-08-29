@@ -2,140 +2,159 @@ defmodule CommandTest do
   use ExUnit.Case
   doctest Command
 
-  test "catches invalid data" do
-    {result, _} = Command.command("whatever", %{data: []})
-    assert result == :error
-  end
-
-  describe "> increment data pointer" do
-    test "parsing default setting behaves correclty" do
-      result = Command.command(">", %{data: [0], dataptr: 0})
-      assert result == {:ok, %{data: [0, 0], dataptr: 1}}
-    end
-
-    test "it appends a 0 to data when pointing past the end" do
-      {:ok, %{data: data}} = Command.command(">", %{data: [1], dataptr: 0})
-      assert data == [1, 0]
-    end
-
-    test "it doesn't change data when pointing internally" do
-      {:ok, %{data: data}} = Command.command(">", %{data: [1,2], dataptr: 0})
-      assert data == [1,2]
-    end
-
-    # test "it fails when data is not a list" do
-    #   assert_raise FunctionClauseError, fn ->
-    #     Command.command(">", %{data: "hello", dataptr: 0})
-    #   end
-    # end
-    #
-    # test "it fails when dataptr is not a number" do
-    #   assert_raise FunctionClauseError, fn ->
-    #     Command.command(">", %{data: [], dataptr: "hello"})
-    #   end
-    # end
-    #
-    # test "it fails when dataptr is a negative number" do
-    #   assert_raise FunctionClauseError, fn ->
-    #     Command.command(">", %{data: [], dataptr: -1})
-    #   end
-    # end
-  end
-
-
-  # dptr -= 1
-  # if dptr < 0
-  #   data.unshift 0
-  #   dptr = 0
-  # end
-  #
-  describe "< decrement data pointer" do
-    test "parsing default setting behaves correclty" do
-      result = Command.command("<", %{data: [0], dataptr: 0})
-      assert result == {:ok, %{data: [0, 0], dataptr: 0}}
-    end
-
-    test "it moves the data pointer down" do
-      {:ok, %{dataptr: dataptr}} = Command.command("<", %{data: [1,2,3], dataptr: 1})
-      assert dataptr == 0
-    end
-
-    test "it prepends an item to the data stack when it goes negative" do
-      {:ok, %{data: data}} = Command.command("<", %{data: [1], dataptr: 0})
-      assert data == [0, 1]
-    end
-
-    # test "it fails when data is not a list" do
-    #   assert_raise FunctionClauseError, fn ->
-    #     Command.command("<", %{data: "hello", dataptr: 0})
-    #   end
-    # end
-    #
-    # test "it fails when dataptr is not a number" do
-    #   assert_raise FunctionClauseError, fn ->
-    #     Command.command("<", %{data: [], dataptr: "hello"})
-    #   end
-    # end
-    #
-    # test "it fails when dataptr is a negative number" do
-    #   assert_raise FunctionClauseError, fn ->
-    #     Command.command("<", %{data: [], dataptr: -1})
-    #   end
-    # end
+  defp create_command(command_cursor, data_cursor) do
+    %CmdState{code: %ZipperList{cursor: command_cursor},
+              data: %ZipperList{cursor: data_cursor}}
   end
 
   describe ", capture" do
     test "input should have the front char removed" do
-      {:ok, %{input: input}} = Command.command(",", %{data: [0], dataptr: 0, input: 'hello'})
-      assert input == 'ello'
+      cmd = %{create_command(:input, nil) | input: String.codepoints("hello")}
+      {_, %CmdState{input: input}} = Command.command(cmd)
+      assert input == ["e", "l", "l", "o"]
     end
 
     test "it should replace the current data ptr location with the first input" do
-      {:ok, %{data: data}} = Command.command(",", %{data: [97], dataptr: 0, input: 'hello'})
-      assert data == [104]
+      cmd = %{create_command(:input, 98) | input: String.codepoints("hello")}
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 104
+    end
+
+    test "returns :continue action" do
+      cmd = %{create_command(:input, 98) | input: String.codepoints("hello")}
+      assert {:continue, _} = Command.command(cmd)
     end
   end
 
-  describe "+ increment value" do
-    test "increments the data at the data ptr location" do
-      {:ok, %{data: data}} = Command.command("+", %{data: [97, 104], dataptr: 1})
-      assert data == [97, 105]
+  describe ". output value" do
+    test "it adds the current data character to the output list" do
+      cmd = %{create_command(:output, 98) | output: [97]}
+      {_, %CmdState{output: output}} = Command.command(cmd)
+      assert output == [98, 97]
     end
 
-    test "it wraps around to 0 when greater than 255" do
-      {:ok, %{data: data}} = Command.command("+", %{data: [97, 255], dataptr: 1})
-      assert data == [97, 0]
-    end
-
-    # uncertain how BF handles this
-    test "it results in an error when there is no data at the pointer" do
-      {result, _} = Command.command("+", %{data: [], dataptr: 0})
-      assert result == :error
+    test "returns :continue action" do
+      cmd = %{create_command(:output, 98) | output: [97]}
+      assert {:continue, _} = Command.command(cmd)
     end
   end
 
   describe "- decrement value" do
     test "decrements the data at the data ptr location" do
-      {:ok, %{data: data}} = Command.command("-", %{data: [97, 104], dataptr: 1})
-      assert data == [97, 103]
+      cmd = create_command(:decrement, 100)
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 99
     end
 
-    test "it wraps around to 255 when less than 0" do
-      {:ok, %{data: data}} = Command.command("-", %{data: [97, 0], dataptr: 1})
-      assert data == [97, 255]
+    test "safely returns 255 when cursor is nil" do
+      cmd = create_command(:decrement, nil)
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 255
     end
 
-    # uncertain how BF handles this
-    test "it results in an error when there is no data at the pointer" do
-      {result, _} = Command.command("-", %{data: [], dataptr: 0})
-      assert result == :error
+    test "returns 255 when cursor is 0" do
+      cmd = create_command(:decrement, 0)
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 255
+    end
+
+    test "returns :continue action" do
+      cmd = create_command(:decrement, 100)
+      assert {:continue, _} = Command.command(cmd)
     end
   end
 
-  describe ". output value" do
-    test "it adds the current data character to the output (in reverse)" do
-      {:ok, %{output: output}} = Command.command(".", %{data: [97, 98], dataptr: 1, output: [97]})
-      assert output == [98, 97]
+  describe "+ increment value" do
+    test "increments the data at the data ptr location" do
+      cmd = create_command(:increment, 100)
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 101
+    end
+
+    test "safely returns 1 when cursor is nil" do
+      cmd = create_command(:increment, nil)
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 1
+    end
+
+    test "returns 0 when cursor is 255" do
+      cmd = create_command(:increment, 255)
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 0
+    end
+
+    test "returns :continue action" do
+      cmd = create_command(:increment, 100)
+      assert {:continue, _} = Command.command(cmd)
     end
   end
+
+  describe "< decrement data pointer" do
+    test "it moves the data pointer down" do
+      cmd = %CmdState{code: %ZipperList{cursor: :move_left},
+                      data: %ZipperList{left: [1], cursor: 2}}
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 1
+    end
+
+    test "safely defaults to 0 when it can't move left more" do
+      cmd = %CmdState{code: %ZipperList{cursor: :move_left},
+                      data: ZipperList.empty}
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 0
+    end
+
+    test "returns :continue action" do
+      cmd = %CmdState{code: %ZipperList{cursor: :move_left},
+                      data: ZipperList.empty}
+      assert {:continue, _} = Command.command(cmd)
+    end
+  end
+
+  describe "> increment data pointer" do
+    test "it moves the data pointer up" do
+      cmd = %CmdState{code: %ZipperList{cursor: :move_right},
+                      data: %ZipperList{cursor: 2, right: [1]}}
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 1
+    end
+
+    test "safely defaults to 0 when it can't move right more" do
+      cmd = %CmdState{code: %ZipperList{cursor: :move_right},
+                      data: ZipperList.empty}
+      {_, %CmdState{data: data}} = Command.command(cmd)
+      assert data.cursor == 0
+    end
+
+    test "returns :continue action" do
+      cmd = %CmdState{code: %ZipperList{cursor: :move_right},
+                      data: ZipperList.empty}
+      assert {:continue, _} = Command.command(cmd)
+    end
+  end
+
+  describe "[ loop begin" do
+    test "returns :break action when cursor is 0" do
+      cmd = create_command(:loop_begin, 0)
+      assert {:break, ^cmd} = Command.command(cmd)
+    end
+
+    test "returns :continue_loop action when cursor is non-zero" do
+      cmd = create_command(:loop_begin, "potato")
+      assert {:continue_loop, ^cmd} = Command.command(cmd)
+    end
+  end
+
+  describe "] loop end" do
+    test "returns :restart_loop action when cursor is non-zero" do
+      cmd = create_command(:loop_end, "potato")
+      assert {:restart_loop, ^cmd} = Command.command(cmd)
+    end
+
+    test "returns :end_loop action when cursor is 0" do
+      cmd = create_command(:loop_end, 0)
+      assert {:end_loop, ^cmd} = Command.command(cmd)
+    end
+  end
+
 end

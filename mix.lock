@@ -13,5 +13,4 @@
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], []},
   "mimerl": {:hex, :mimerl, "1.0.2", "993f9b0e084083405ed8252b99460c4f0563e41729ab42d9074fd5e52439be88", [:rebar3], []},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.0", "edee20847c42e379bf91261db474ffbe373f8acb56e9079acb6038d4e0bf414f", [:rebar, :make], []},
-  "zipper_list": {:git, "https://github.com/bbugh/zipper_list.git", "df18eb9a7346bafaeafcaf78401af7c7a66f70a1", []},
-  "zipper_tree": {:hex, :zipper_tree, "0.1.1", "e4d4a2bfdf958fea0aaf844e1b3ef457ea11d6331ba77a043b6b5606f6222a47", [:mix], []}}
+  "zipper_list": {:git, "https://github.com/bbugh/zipper_list.git", "1fd542e1407362f1a8df5ff329da427eed76d9e5", []}}

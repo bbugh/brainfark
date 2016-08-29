@@ -17,8 +17,9 @@ defmodule CmdState do
   ## Examples
 
       iex> CmdState.new(",.,.", "hi")
-      %CmdState{code: %ZipperList{left: [], right: [",", ".", ",", "."]},
-        data: %ZipperList{left: [], right: []}, input: ["h", "i"], output: []}
+      %CmdState{data: %ZipperList{cursor: nil, left: [], right: []},
+       code: %ZipperList{cursor: ",", left: [], right: [".", ",", "."]},
+       input: ["h", "i"], output: [], stack: []}
   """
   @spec new(String.t, String.t) :: CmdState.t
   def new(code, input) do
@@ -28,7 +29,16 @@ defmodule CmdState do
     }
   end
 
-  def compile_output(%CmdState{output: output}) do
-    output |> Enum.reverse |> Enum.join
+  @doc """
+  Turns the output array from a command state into a readable string.
+
+  ## Examples
+
+      iex> CmdState.render_output(%CmdState{output: 'krafniarB'})
+      "Brainfark"
+  """
+  @spec render_output(CmdState.t) :: String.t
+  def render_output(%CmdState{output: output}) do
+    output |> to_string |> String.reverse
   end
 end
