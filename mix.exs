@@ -3,7 +3,7 @@ defmodule Brainfark.Mixfile do
 
   def project do
     [app: :brainfark,
-     version: "0.5.0",
+     version: "0.7.0",
      elixir: "~> 1.3",
      name: "Brainfark",
      source_url: "https://github.com/bbugh/brainfark",

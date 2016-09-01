@@ -32,10 +32,10 @@ defmodule InterpreterTest do
                :move_left, :move_right, :loop_end]
 
     result = Interpreter.interpret(program, "ouch")
-    assert result == %CmdState{code: %ZipperList{cursor: nil,
-      left: [:loop_end, :output, :input, :output, :input, :output, :input,
-      :output, :input, :loop_begin], right: []}, data: %ZipperList{cursor: 0,
-      left: [], right: []}, input: ["o", "u", "c", "h"], output: [], stack: []}
+    assert result == %CmdState{data: %ZipperList{cursor: 0, left: [],
+      right: []}, input: ["o", "u", "c", "h"], output: [], stack: [], code:
+      %ZipperList{cursor: nil, right: [], left: [:loop_end, :move_right,
+      :move_left, :increment, :decrement, :increment, :decrement, :loop_begin]}}
   end
 
   # program: ,[.[-],]
