@@ -97,16 +97,17 @@ defmodule CommandTest do
       assert data.cursor == 1
     end
 
-    test "safely defaults to 0 when it can't move left more" do
-      cmd = %CmdState{code: %ZipperList{cursor: :move_left},
+    test "raises an error when it moves left too far" do
+      assert_raise RuntimeError, ~r{underflow}, fn->
+        cmd = %CmdState{code: %ZipperList{cursor: :move_left},
                       data: ZipperList.empty}
-      {_, %CmdState{data: data}} = Command.command(cmd)
-      assert data.cursor == 0
+        Command.command(cmd)
+      end
     end
 
     test "returns :continue action" do
       cmd = %CmdState{code: %ZipperList{cursor: :move_left},
-                      data: ZipperList.empty}
+                      data: ZipperList.from_list_end([1])}
       assert {:continue, _} = Command.command(cmd)
     end
   end
@@ -141,19 +142,19 @@ defmodule CommandTest do
 
     test "returns :continue_loop action when cursor is non-zero" do
       cmd = create_command(:loop_begin, "potato")
-      assert {:continue_loop, ^cmd} = Command.command(cmd)
+      assert {:continue, ^cmd} = Command.command(cmd)
     end
   end
 
   describe "] loop end" do
     test "returns :restart_loop action when cursor is non-zero" do
       cmd = create_command(:loop_end, "potato")
-      assert {:restart_loop, ^cmd} = Command.command(cmd)
+      assert {:restart, ^cmd} = Command.command(cmd)
     end
 
     test "returns :end_loop action when cursor is 0" do
       cmd = create_command(:loop_end, 0)
-      assert {:end_loop, ^cmd} = Command.command(cmd)
+      assert {:continue, ^cmd} = Command.command(cmd)
     end
   end
 

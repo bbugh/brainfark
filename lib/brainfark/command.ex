@@ -12,7 +12,7 @@ defmodule Command do
       iex> state = %CmdState{code: %ZipperList{cursor: :loop_begin},
       ...>                   data: %ZipperList{cursor: 97}}
       iex> Command.command(state)
-      {:continue_loop, %CmdState{code: %ZipperList{cursor: :loop_begin},
+      {:continue, %CmdState{code: %ZipperList{cursor: :loop_begin},
                                  data: %ZipperList{cursor: 97}}}
   """
   def command(state = %CmdState{code: code}) do
@@ -28,20 +28,29 @@ defmodule Command do
     end
   end
 
-  # If input is empty, set the current cursor to 0
+
+  # This implementation uses the "leave the cell unchanged" option.
+  #
+  # "Note: It is strongly recommended that an interpreter be configurable to all
+  # three normal form of EOF (Zero, minus one and unchanged)."
+  # See https://esolangs.org/wiki/brainfuck#EOF
+  #
+  # TODO: Added the three different EOF modes as an option
   defp input(state = %CmdState{input: []}) do
-    {:continue, %{state | data: ZipperList.replace(state.data, 0)}}
+    {:continue, state}
   end
 
   # If input has data, unshift the front and replace the current data position
   # with the value of the character
   defp input(state = %CmdState{input: [<<char::utf8>> | input]}) do
-    {:continue, %{state | input: input, data: ZipperList.replace(state.data, char)}}
+    {:continue,
+      %{state | input: input, data: ZipperList.replace(state.data, char)}}
   end
 
   # Adds the current data's value to the output array. Does not modify the
   # data itself.
   defp output(state = %CmdState{data: data, output: output}) do
+    [data.cursor] |> to_string |> IO.write
     {:continue, %{state | output: [data.cursor | output]}}
   end
 
@@ -59,16 +68,18 @@ defmodule Command do
     {:continue, %{state | data: ZipperList.replace(data, new_value)}}
   end
 
-  # Move "left" down the data list
+  # Move "left" down the data list. Raises an error if going left too far.
   defp move_left(state = %CmdState{data: data}) do
-    # Should this be a runtime error if it goes left too far?
+    if ZipperList.beginning?(data) do
+      raise RuntimeError, message: "Memory border underflow"
+    end
+
     data = data |> ZipperList.left |> ZipperList.safe_cursor(0)
     {:continue, %{state | data: data}}
   end
 
-  # Move "right" down the data list
+  # Move "right" down the data list. Expands as necessary.
   defp move_right(state = %CmdState{data: data}) do
-    # Should this be a runtime error if it goes right too far?
     data = data |> ZipperList.right |> ZipperList.safe_cursor(0)
     {:continue, %{state | data: data}}
   end
@@ -79,7 +90,7 @@ defmodule Command do
     if data.cursor == 0 do
       {:break, state}
     else
-      {:continue_loop, state}
+      {:continue, state}
     end
   end
 
@@ -87,9 +98,9 @@ defmodule Command do
   # and run the next command.
   defp loop_end(state = %CmdState{data: data}) do
     if data.cursor != 0 do
-      {:restart_loop, state}
+      {:restart, state}
     else
-      {:end_loop, state}
+      {:continue, state}
     end
   end
 

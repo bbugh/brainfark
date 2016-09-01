@@ -4,21 +4,13 @@ defmodule Interpreter do
 
   To turn the output into text, pass the final state to
   `CmdState.render_output/1` and it will convert it into a string.
-
-  ## Examples
-      iex> ",[.,]"
-      ...> |> Lexer.lex
-      ...> |> Parser.parse
-      ...> |> Interpreter.interpret("what?")
-      %CmdState{code: %ZipperList{cursor: nil,
-        left: [:loop_end, :input, :output, :loop_begin, :input],
-        right: []}, data: %ZipperList{cursor: 0, left: [], right: []},
-        input: [], output: '?tahw', stack: []}
   """
 
   @doc """
   Interpret a parsed Brainfark program.
   """
+  def interpret(program), do: interpret(program, "")
+
   def interpret(program, input) do
     do_interpret(%CmdState{
       code: program |> ZipperList.from_list,
@@ -34,14 +26,13 @@ defmodule Interpreter do
   # If anything else is happening, then do_interpret will recurse
   defp do_interpret(state = %CmdState{}) do
     {action, state} = Command.command(state)
+    # IO.inspect action
 
     # Act on the stack based on the command's control action
     state = case action do
       :continue -> continue(state)
-      :continue_loop -> continue_loop(state)
-      :restart_loop -> restart_loop(state)
-      :end_loop -> end_loop(state)
-      #:break -> break(state) # NoOp, but part of the spec
+      :break -> find_loop_end(state)
+      :restart -> find_loop_begin(state)
     end
 
     do_interpret(state)
@@ -52,34 +43,30 @@ defmodule Interpreter do
     %{state | code: ZipperList.right(code)}
   end
 
-  # NoOp - never seems to be called, but is supposedly correct...
-  # # On break, pop the stack and go to the next item after the bracket
-  # defp break(state = %CmdState{stack: stack}) do
-  #   [end_bracket | stack] = stack
-  #   %{state | code: end_bracket |> continue, stack: stack}
-  # end
-
-  # This is when a loop starts, or begins again after :restart_loop
-  # If the last stack item was a :loop_end, it will pop the stack, otherwise,
-  # it will add the current :loop_begin state onto the stack.
-  defp continue_loop(state = %CmdState{code: code, stack: stack}) do
-    stack = cond do
-      Enum.empty?(stack) -> [code]
-      List.first(stack).cursor == :loop_end -> [code | tl(stack)]
-      true -> [code | stack]
-    end
-
-    continue(%{state | stack: stack})
+  # Traverses backwards to find the current loop's beginning
+  defp find_loop_begin(state = %CmdState{code: code}) do
+    code = code
+      |> ZipperList.reverse
+      |> do_find_loop(:loop_end, :loop_begin)
+      |> ZipperList.reverse
+    %{state | code: code}
   end
 
-  # The loop is over, let's quit now and move on to the next item.
-  defp end_loop(state = %CmdState{stack: stack}) do
-    %{state | stack: tl(stack)} |> continue
+  # traverse forward to find the current loop's ending
+  defp find_loop_end(state = %CmdState{code: code}) do
+    code = do_find_loop(code, :loop_begin, :loop_end)
+    %{state | code: code}
   end
 
-  # The loop should start again, go back to :loop_begin
-  defp restart_loop(state = %CmdState{stack: stack, code: code}) do
-    [new_code | stack] = stack
-    %{state | code: new_code, stack: [code | stack]}
+  # traverse to find the matching end token
+  defp do_find_loop(code, start_token, end_token) do
+    Enum.reduce_while(code, 0, fn(z, i) ->
+      case {z.cursor, i} do
+        {^start_token, _} -> {:cont, i + 1}
+        {^end_token, 1} -> {:halt, z}
+        {^end_token, _} -> {:cont, i - 1}
+        _ -> {:cont, i}
+      end
+    end)
   end
 end
